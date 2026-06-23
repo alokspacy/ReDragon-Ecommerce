@@ -1,61 +1,152 @@
-# ReDragon - Modern E-commerce Marketplace
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=280&color=0:991b1b,50:dc2626,100:f87171&text=ReDragon&fontColor=ffffff&fontSize=65&animation=fadeIn&fontAlignY=40"/>
+</p>
 
-ReDragon is a full-stack e-commerce marketplace branded and developed by **Alok Singh**. The platform allows users to browse products, apply coupons, save multiple shipping addresses, checkout using **Stripe** or **Cash on Delivery (COD)**, register their own seller stores, and manage products and order fulfillment via a dedicated Seller Dashboard. An Admin Panel is also provided to review store applications and monitor system statistics.
+<p align="center">
+  <h1 align="center">🐉 ReDragon</h1>
+  <p align="center">
+    Multi-Vendor E-Commerce Marketplace
+  </p>
+  <p align="center">
+    Dynamic Cart Syncing • PostgreSQL & Prisma • Multi-Vendor Management • Razorpay Integration
+  </p>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/alokspacy/ReDragon-Ecommerce?style=for-the-badge">
+  <img src="https://img.shields.io/github/forks/alokspacy/ReDragon-Ecommerce?style=for-the-badge">
+  <img src="https://img.shields.io/github/license/alokspacy/ReDragon-Ecommerce?style=for-the-badge">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-Frontend-black?style=flat-square&logo=next.js">
+  <img src="https://img.shields.io/badge/Node.js-Backend-green?style=flat-square&logo=node.js">
+  <img src="https://img.shields.io/badge/Express.js-API-black?style=flat-square&logo=express">
+  <img src="https://img.shields.io/badge/PostgreSQL-Database-blue?style=flat-square&logo=postgresql">
+  <img src="https://img.shields.io/badge/Prisma-ORM-indigo?style=flat-square&logo=prisma">
+  <img src="https://img.shields.io/badge/Razorpay-Payments-blue?style=flat-square&logo=razorpay">
+</p>
 
 ---
 
-## Tech Stack & Architecture
+# 📖 Overview
 
-- **Frontend (Vercel)**: Next.js 15, React 19, Tailwind CSS v4, Redux Toolkit
-- **Backend (Render)**: Node.js, Express, Prisma ORM, PostgreSQL database, Multer, Stripe SDK
+**ReDragon** is a full-stack multi-vendor e-commerce marketplace branded and developed by **Alok Singh**. The platform allows users to browse products, apply discount coupons, save multiple shipping addresses, checkout using secure **Razorpay** payments or **Cash on Delivery (COD)**, register their own seller stores, and manage products and order fulfillment via a dedicated Seller Dashboard. 
+
+An Admin Panel is also provided to review store applications, monitor system statistics, and manage platform coupons.
+
+---
+
+# ✨ Features
+
+| Feature | Description |
+|:---|:---|
+| 🔑 **JWT Authentication** | Local login and signup with secure bcrypt password hashing and session authorization. |
+| 🐉 **Multi-Vendor Store** | Regular users can submit a store request. Approved stores can list and sell products on the platform. |
+| 🔄 **Cart & Address Sync** | Client-side Redux cart states automatically sync to the PostgreSQL database in real-time. |
+| 🎟️ **Coupon System** | Admin-manageable coupon codes with validations (expiry checks, new-user filters). |
+| 💳 **Razorpay Checkout** | Fully integrated Razorpay checkout flows supporting both live key verification and offline simulation. |
+| 🛠️ **Simulated Sandbox Mode** | Out-of-the-box local testing capabilities. When keys are omitted, checkouts route to local mock APIs. |
+| 📊 **Seller Dashboard** | Earnings summary, total product/order count, ratings list, add/manage products, toggle inStock, update fulfillment status. |
+| 👑 **Admin Dashboard** | System-wide revenue charts, store applications verification, coupon managers. |
 
 ---
 
-## Features
+# 🏗 Architecture
 
-1. **JWT User Authentication**: Local login and signup with secure bcrypt password hashing.
-2. **Multi-Vendor Store Registrations**: Customers can register a store. Admins must verify and approve applications before products can be listed.
-3. **Cart & Address Sync**: Client-side Redux cart states automatically sync to the database in real-time.
-4. **Coupon Discounts**: Admin-manageable coupon codes with validations (expiry checks, new-user filters).
-5. **Stripe Payments**: Integration with Stripe Billing Checkout sessions and secure Stripe raw Webhooks to update payment status automatically.
-6. **Simulated Sandbox Mode**: Out-of-the-box local testing capabilities. If Stripe keys are omitted, the order is routed to a simulation url which calls a mock payment API endpoint to test the checkout flow offline.
-7. **Dashboards**:
-   - **Seller Dashboard**: Earnings summary, total product/order count, ratings list, add/manage products, toggle inStock, update fulfillment status.
-   - **Admin Dashboard**: System-wide revenue charts, store applications verification, coupon managers.
+```
+┌──────────────────────────────────────┐
+│             Web Frontend             │
+│        Next.js 15 / Redux RTK        │
+└──────────────────┬───────────────────┘
+                   │ HTTP / API Requests
+                   ▼
+┌──────────────────────────────────────┐
+│           Node.js Backend            │
+│         Express Server / JWT         │
+└──────────────────┬───────────────────┘
+         ┌_________┴_________┐
+         ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐
+│   PostgreSQL    │ │    Razorpay     │
+│   Prisma Client │ │ Payment Gateway │
+└─────────────────┘ └─────────────────┘
+```
+
+## Frontend
+- **Next.js 15**: React 19 App Router & Server actions
+- **Redux Toolkit**: Client-side cart sync, session handling, and store states
+- **Tailwind CSS**: Modern, elegant, fully responsive designs with ReDragon's crimson red theme accents
+- **Axios & JWT**: Clean service integrations and token managers
+
+## Backend
+- **Node.js**: Asynchronous backend server
+- **Express.js**: REST API controllers and middleware routers
+- **Prisma ORM**: Relational schema handling and fluent queries
+- **Multer**: Static product photo upload handling
+- **Crypto & HMAC-SHA256**: Secure verification of Razorpay webhooks and hashes
+
+## Database
+- **PostgreSQL**: Managed Neon PostgreSQL cluster with relational database structure
+
+```
+ReDragon-Ecommerce
+├── backend
+│   ├── controllers        # Request handlers & logic (Auth, Orders, Coupons, Products, Stores)
+│   ├── middleware         # JWT & role verification filters
+│   ├── prisma             # Schema file (`schema.prisma`) & database seed scripts
+│   ├── uploads            # Static assets and product image uploads
+│   ├── .env.example       # Example environment configuration
+│   ├── server.js          # API entry point & configuration
+│   └── package.json       # Backend dependencies & script tasks
+│
+└── frontend
+    ├── app                # Next.js App Router (Public routes, User panel, Admin panel, Seller dashboard)
+    ├── assets             # Brand logos & static site graphics
+    ├── components         # Shared UI controls (Navbar, Footer, OrderSummary, Charts)
+    ├── lib                # Core API routing client definitions
+    └── package.json       # Frontend dependencies & next tasks
+```
 
 ---
+
+# 🚀 Getting Started
 
 ## Environmental Variables
 
-### Backend (`/backend/.env`)
-Create a `.env` file in the `/backend` folder:
+### Backend Configuration (`/backend/.env`)
+Create a `.env` file in the `/backend` directory:
 ```env
 PORT=5000
 DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
 JWT_SECRET="your_secure_jwt_secret"
 CLIENT_URL="http://localhost:3000"
 
-# Stripe Configs (optional for local mock testing)
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
+# Razorpay Configs (Fallback to simulation if keys are missing)
+RAZORPAY_KEY_ID="rzp_test_..."
+RAZORPAY_KEY_SECRET="your_secret_..."
 ```
 
-### Frontend (`/.env.local`)
-Create a `.env.local` file in the root directory:
+### Frontend Configuration (`/frontend/.env.local`)
+Create a `.env.local` file in the `/frontend` directory:
 ```env
 NEXT_PUBLIC_BACKEND_URL="http://localhost:5000"
-NEXT_PUBLIC_CURRENCY_SYMBOL="$"
+NEXT_PUBLIC_CURRENCY_SYMBOL="₹"
+NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_..."
 ```
 
 ---
 
-## Local Development Setup
+## Installation & Setup
 
-### Prerequisite
-Ensure you have Node.js (v18+) and a running PostgreSQL instance (or Neon / Supabase cloud database link).
+### Clone Repository
+```bash
+git clone https://github.com/alokspacy/ReDragon-Ecommerce.git
+cd ReDragon-Ecommerce
+```
 
 ### 1. Set Up the Backend
-1. Open a terminal and navigate to `/backend`:
+1. Navigate to the backend directory:
    ```bash
    cd backend
    ```
@@ -65,56 +156,50 @@ Ensure you have Node.js (v18+) and a running PostgreSQL instance (or Neon / Supa
    ```
 3. Initialize the database schema and generate Prisma client:
    ```bash
-   npx prisma migrate dev --name init
+   npx prisma db push
    npx prisma generate
    ```
-4. Start the backend development server:
+4. Run the seed script to populate default admin, products, and images:
+   ```bash
+   npx prisma db seed
+   ```
+5. Start the backend development server:
    ```bash
    npm run dev
    ```
 
 ### 2. Set Up the Frontend
-1. Open a separate terminal in the root directory:
+1. Open a new terminal in the root directory and navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
    ```bash
    npm install
    ```
-2. Start the Next.js development server:
+3. Start the Next.js development server:
    ```bash
    npm run dev
    ```
-3. Open your browser and navigate to `http://localhost:3000`.
+4. Access the web interface at `http://localhost:3000`.
 
 ---
 
-## Testing Admin & Seller Roles
-
-To test the Admin Panel and Seller Dashboards:
-1. Register a user with email `admin@redragon.com`. The system automatically elevates this account to the **Admin** role.
-2. Go to `/create-store` as any regular user and submit a store request.
-3. Log in as `admin@redragon.com`, navigate to the **Admin Panel** (`/admin`), go to **Approve Stores**, and click **Approve**.
-4. Log back in as the store owner, and you will see the **Seller Dashboard** link in the navigation bar. You can now list products, add stock, and fulfill orders!
+## 🛠️ Testing Admin & Seller Roles
+1. **Register Admin**: Register a user with email `admin@redragon.com`. The system automatically elevates this account to the **Admin** role.
+2. **Submit Store Request**: Go to `/create-store` as any regular logged-in customer and submit a store registration form.
+3. **Approve Store**: Log in as `admin@redragon.com`, navigate to the **Admin Panel** (`/admin`), and approve the store request under the **Approve Stores** tab.
+4. **Seller Dashboard**: Log back in as the store owner. You will now see the **Seller Dashboard** link in your account menu, allowing you to list products, manage inventory, and fulfill orders!
 
 ---
 
-## Deployment Guides
+## 👥 Support & Contact
+- **Developer/Brand**: Alok Singh
+- **GitHub**: [alokspacy](https://github.com/alokspacy)
 
-### 1. Backend on Render
-1. Connect your GitHub repository to Render.
-2. Create a new **Web Service** pointing to your repository.
-3. Set the **Root Directory** to `backend`.
-4. Configure settings:
-   - **Build Command**: `npm install && npx prisma generate && npx prisma migrate deploy`
-   - **Start Command**: `node server.js`
-5. Under **Environment Variables**, define:
-   - `DATABASE_URL` (Neon or Supabase connection string)
-   - `JWT_SECRET`
-   - `CLIENT_URL` (your deployed Vercel frontend URL)
-   - `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` (if utilizing Stripe)
+If you found this project useful, please consider giving it a star.
 
-### 2. Frontend on Vercel
-1. Import your repository into Vercel.
-2. Vercel automatically detects Next.js.
-3. In **Environment Variables**, add:
-   - `NEXT_PUBLIC_BACKEND_URL` (pointing to your deployed Render service URL e.g. `https://your-app.onrender.com`)
-   - `NEXT_PUBLIC_CURRENCY_SYMBOL` (e.g. `$`)
-4. Click **Deploy**.
+⭐ Star the repository to support future development.
+
+Built with ❤️ using Next.js, Express, and PostgreSQL
+© 2026 ReDragon
