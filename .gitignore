@@ -1,0 +1,18 @@
+# System files
+.DS_Store
+Thumbs.db
+*.log
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.*.local
+
+# Backend (Express & Prisma)
+backend/node_modules/
+backend/.env
+backend/uploads/*
+!backend/uploads/placeholder.png
+node_modules
