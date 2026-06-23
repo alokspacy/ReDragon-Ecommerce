@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { MailIcon, MapPinIcon } from "lucide-react"
 import Loading from "@/components/Loading"
 import Image from "next/image"
-import { dummyStoreData, productDummyData } from "@/assets/assets"
+import { api } from "@/lib/api"
 
 export default function StoreShop() {
 
@@ -15,28 +15,38 @@ export default function StoreShop() {
     const [loading, setLoading] = useState(true)
 
     const fetchStoreData = async () => {
-        setStoreInfo(dummyStoreData)
-        setProducts(productDummyData)
-        setLoading(false)
+        try {
+            const store = await api.stores.getPublicStore(username)
+            setStoreInfo(store)
+            setProducts(store.Product || [])
+        } catch (error) {
+            console.error("Failed to fetch public store details:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
-        fetchStoreData()
-    }, [])
+        if (username) {
+            fetchStoreData()
+        }
+    }, [username])
 
     return !loading ? (
         <div className="min-h-[70vh] mx-6">
 
             {/* Store Info Banner */}
-            {storeInfo && (
+            {storeInfo ? (
                 <div className="max-w-7xl mx-auto bg-slate-50 rounded-xl p-6 md:p-10 mt-6 flex flex-col md:flex-row items-center gap-6 shadow-xs">
-                    <Image
-                        src={storeInfo.logo}
-                        alt={storeInfo.name}
-                        className="size-32 sm:size-38 object-cover border-2 border-slate-100 rounded-md"
-                        width={200}
-                        height={200}
-                    />
+                    {storeInfo.logo && (
+                        <Image
+                            src={api.imageUrl(storeInfo.logo)}
+                            alt={storeInfo.name}
+                            className="size-32 sm:size-38 object-cover border-2 border-slate-100 rounded-md"
+                            width={200}
+                            height={200}
+                        />
+                    )}
                     <div className="text-center md:text-left">
                         <h1 className="text-3xl font-semibold text-slate-800">{storeInfo.name}</h1>
                         <p className="text-sm text-slate-600 mt-2 max-w-lg">{storeInfo.description}</p>
@@ -54,15 +64,25 @@ export default function StoreShop() {
                         </div>
                     </div>
                 </div>
+            ) : (
+                <div className="max-w-7xl mx-auto text-center mt-20 text-slate-400">
+                    <h1 className="text-2xl font-semibold">Store not found</h1>
+                </div>
             )}
 
             {/* Products */}
-            <div className=" max-w-7xl mx-auto mb-40">
-                <h1 className="text-2xl mt-12">Shop <span className="text-slate-800 font-medium">Products</span></h1>
-                <div className="mt-5 grid grid-cols-2 sm:flex flex-wrap gap-6 xl:gap-12 mx-auto">
-                    {products.map((product) => <ProductCard key={product.id} product={product} />)}
+            {storeInfo && (
+                <div className=" max-w-7xl mx-auto mb-40">
+                    <h1 className="text-2xl mt-12">Shop <span className="text-slate-800 font-medium">Products</span></h1>
+                    {products.length > 0 ? (
+                        <div className="mt-5 grid grid-cols-2 sm:flex flex-wrap gap-6 xl:gap-12 mx-auto">
+                            {products.map((product) => <ProductCard key={product.id} product={product} />)}
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 mt-6">No products listed by this store yet.</p>
+                    )}
                 </div>
-            </div>
+            )}
         </div>
     ) : <Loading />
 }

@@ -135,6 +135,9 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify({ status }),
       });
+    },
+    getPublicStore: async (username) => {
+      return request(`/stores/public/${encodeURIComponent(username)}`);
     }
   },
 
@@ -163,6 +166,12 @@ export const api = {
     mockPay: async (id) => {
       return request(`/orders/mock-pay/${id}`, {
         method: 'POST',
+      });
+    },
+    verifyRazorpay: async (verificationData) => {
+      return request('/orders/verify-razorpay', {
+        method: 'POST',
+        body: JSON.stringify(verificationData),
       });
     }
   },

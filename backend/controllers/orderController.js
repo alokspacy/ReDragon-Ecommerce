@@ -1,5 +1,15 @@
 const prisma = require('../prisma/client');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'dummy_stripe_key');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+
+// Initialize Razorpay instance if keys are provided
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  });
+}
 
 // @desc    Create a new order (COD or Stripe checkout)
 // @route   POST /api/orders
@@ -49,51 +59,47 @@ const createOrder = async (req, res) => {
         orderId: order.id,
         paymentMethod: 'COD'
       });
-    } else if (paymentMethod === 'STRIPE') {
-      // Create Stripe session
-      if (!process.env.STRIPE_SECRET_KEY) {
-        // Return a simulated success url if Stripe key isn't provided
-        console.warn('STRIPE_SECRET_KEY is not defined. Simulating Stripe checkout session...');
+    } else if (paymentMethod === 'RAZORPAY') {
+      // Create Razorpay Order
+      if (!razorpay) {
+        // Return a simulated success response if Razorpay key isn't provided
+        console.warn('RAZORPAY_KEY_ID is not defined. Simulating Razorpay order creation...');
         return res.status(201).json({
           success: true,
-          paymentMethod: 'STRIPE',
-          url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders?stripe_mock_success=true&order_id=${order.id}`
+          paymentMethod: 'RAZORPAY',
+          isMock: true,
+          orderId: order.id,
+          amount: Math.round(order.total * 100),
+          currency: 'USD'
         });
       }
 
-      // Build Stripe line items
-      const lineItems = order.orderItems.map(item => {
-        // Stripe prices are in cents, so multiply dollar values by 100
-        const itemPrice = Math.round(item.price * 100);
-        return {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: item.product.name,
-              description: item.product.description.slice(0, 100),
-            },
-            unit_amount: itemPrice,
-          },
-          quantity: item.quantity,
-        };
-      });
+      const amountInCents = Math.round(order.total * 100);
 
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: lineItems,
-        mode: 'payment',
-        success_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/orders?payment_success=true&order_id=${order.id}`,
-        cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/cart?payment_cancelled=true`,
-        metadata: {
+      const options = {
+        amount: amountInCents,
+        currency: 'USD',
+        receipt: `receipt_${order.id}`,
+        notes: {
           orderId: order.id
         }
-      });
+      };
 
-      return res.json({
-        success: true,
-        paymentMethod: 'STRIPE',
-        url: session.url
-      });
+      try {
+        const razorpayOrder = await razorpay.orders.create(options);
+        return res.status(201).json({
+          success: true,
+          paymentMethod: 'RAZORPAY',
+          isMock: false,
+          razorpayOrderId: razorpayOrder.id,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          orderId: order.id
+        });
+      } catch (err) {
+        console.error('Razorpay order creation error:', err);
+        return res.status(500).json({ message: 'Razorpay order creation failed' });
+      }
     }
 
     res.status(400).json({ message: 'Invalid payment method' });
@@ -253,52 +259,43 @@ const getAdminDashboard = async (req, res) => {
   }
 };
 
-// @desc    Handle Stripe Webhook Completed Event
-// @route   POST /api/orders/stripe-webhook
-// @access  Public (Stripe webhook endpoint)
-const handleStripeWebhook = async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
+// @desc    Verify Razorpay payment signature
+// @route   POST /api/orders/verify-razorpay
+// @access  Private
+const verifyRazorpayPayment = async (req, res) => {
+  const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    console.warn('STRIPE_WEBHOOK_SECRET is not configured. Webhook ignored.');
-    return res.status(400).send('Webhook Secret not configured');
+  if (!orderId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+    return res.status(400).json({ message: 'Missing required Razorpay payment verification parameters' });
   }
 
   try {
-    // req.body must be raw buffer for Stripe signature verification
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-  } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    const generatedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'dummy_secret')
+      .update(razorpayOrderId + "|" + razorpayPaymentId)
+      .digest('hex');
 
-  // Handle the completed checkout session
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const orderId = session.metadata.orderId;
-
-    try {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { isPaid: true }
-      });
-      console.log(`Payment confirmed and order ${orderId} updated to paid!`);
-    } catch (dbError) {
-      console.error(`Database update error for order ${orderId}: ${dbError.message}`);
-      return res.status(500).send('Database error updating order payment state');
+    if (generatedSignature !== razorpaySignature) {
+      return res.status(400).json({ message: 'Payment verification failed: Invalid signature' });
     }
-  }
 
-  res.json({ received: true });
+    // Update order status to paid
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { isPaid: true }
+    });
+
+    res.json({ success: true, message: 'Payment verified and order confirmed successfully!', order: updatedOrder });
+  } catch (error) {
+    console.error('Razorpay signature verification failed:', error);
+    res.status(500).json({ message: 'Server error verifying Razorpay payment' });
+  }
 };
 
-// @desc    Mock Stripe payment webhook completion (for local development testing)
+// @desc    Mock Razorpay payment completion (for local development testing)
 // @route   POST /api/orders/mock-pay/:id
 // @access  Public
-const mockStripePayment = async (req, res) => {
+const mockRazorpayPayment = async (req, res) => {
   try {
     const updatedOrder = await prisma.order.update({
       where: { id: req.params.id },
@@ -317,6 +314,6 @@ module.exports = {
   getStoreOrders,
   updateOrderStatus,
   getAdminDashboard,
-  handleStripeWebhook,
-  mockStripePayment
+  verifyRazorpayPayment,
+  mockRazorpayPayment
 };

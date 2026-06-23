@@ -55,8 +55,8 @@ export const dummyStoreData = {
     updatedAt: "2025-09-04T09:04:44.273Z",
     user: {
         id: "user_31dOriXqC4TATvc0brIhlYbwwc5",
-        name: "Great Stack",
-        email: "user.greatstack@gmail.com",
+        name: "Alok Singh",
+        email: "admin@redragon.com",
         image: gs_logo,
     }
 }
@@ -274,8 +274,8 @@ export const couponDummyData = [
 
 export const dummyUserData = {
     id: "user_31dQbH27HVtovbs13X2cmqefddM",
-    name: "GreatStack",
-    email: "greatstack@example.com",
+    name: "Alok Singh",
+    email: "admin@redragon.com",
     image: gs_logo,
     cart: {}
 }
@@ -328,14 +328,14 @@ export const storesDummyData = [
     {
         id: "cmemkb98v0001tat8r1hiyxhn",
         userId: "user_31dOriXqC4TATvc0brIhlYbwwc5",
-        name: "GreatStack",
-        description: "GreatStack is the education marketplace where you can buy goodies related to coding and tech",
-        username: "greatstack",
+        name: "ReDragon",
+        description: "ReDragon is the premium marketplace where you can buy goodies related to coding, tech and gaming.",
+        username: "redragon",
         address: "123 Maplewood Drive Springfield, IL 62704 USA",
         status: "approved",
         isActive: true,
         logo: gs_logo,
-        email: "greatstack@example.com",
+        email: "admin@redragon.com",
         contact: "+0 1234567890",
         createdAt: "2025-08-22T08:22:16.189Z",
         updatedAt: "2025-08-22T08:22:44.273Z",

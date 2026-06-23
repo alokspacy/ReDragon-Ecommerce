@@ -39,9 +39,6 @@ if (!fs.existsSync(placeholderFile)) {
 }
 app.use('/uploads', express.static(uploadsPath));
 
-// 1. Stripe Webhook (MUST be declared BEFORE express.json() to capture raw payload buffer)
-app.post('/api/orders/stripe-webhook', express.raw({ type: 'application/json' }), orderController.handleStripeWebhook);
-
 // 2. Regular JSON parser for all other requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -71,6 +68,7 @@ app.get('/api/stores/my-store', protect, storeController.getMyStore);
 app.get('/api/stores/dashboard', protect, storeController.getSellerDashboard);
 app.get('/api/stores', protect, admin, storeController.getStores);
 app.put('/api/stores/:id/approve', protect, admin, storeController.approveStore);
+app.get('/api/stores/public/:username', storeController.getPublicStore);
 
 // Orders Routes
 app.post('/api/orders', protect, orderController.createOrder);
@@ -78,7 +76,8 @@ app.get('/api/orders', protect, orderController.getUserOrders);
 app.get('/api/orders/store', protect, orderController.getStoreOrders);
 app.put('/api/orders/:id/status', protect, orderController.updateOrderStatus);
 app.get('/api/orders/admin-dashboard', protect, admin, orderController.getAdminDashboard);
-app.post('/api/orders/mock-pay/:id', orderController.mockStripePayment);
+app.post('/api/orders/verify-razorpay', protect, orderController.verifyRazorpayPayment);
+app.post('/api/orders/mock-pay/:id', orderController.mockRazorpayPayment);
 
 // Coupons Routes
 app.get('/api/coupons', protect, admin, couponController.getCoupons);

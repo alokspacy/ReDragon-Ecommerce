@@ -7,6 +7,20 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { clearCart } from '@/lib/features/cart/cartSlice';
 
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        if (typeof window !== 'undefined' && window.Razorpay) {
+            resolve(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 const OrderSummary = ({ totalPrice, items }) => {
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
@@ -75,13 +89,59 @@ const OrderSummary = ({ totalPrice, items }) => {
             if (paymentMethod === 'COD') {
                 toast.success('Order placed successfully!');
                 router.push('/orders');
-            } else if (paymentMethod === 'STRIPE') {
-                if (data.url) {
-                    toast.success('Redirecting to Stripe checkout...');
-                    router.push(data.url);
-                } else {
-                    toast.error('Stripe checkout session creation failed');
+            } else if (paymentMethod === 'RAZORPAY') {
+                if (data.isMock) {
+                    toast.success('Simulating Razorpay payment...');
+                    router.push(`/orders?stripe_mock_success=true&order_id=${data.orderId}`);
+                    return;
                 }
+
+                const loaded = await loadRazorpayScript();
+                if (!loaded) {
+                    toast.error('Failed to load Razorpay Checkout SDK');
+                    return;
+                }
+
+                const options = {
+                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_dummy',
+                    amount: data.amount,
+                    currency: data.currency,
+                    name: 'ReDragon',
+                    description: 'E-commerce Purchase',
+                    order_id: data.razorpayOrderId,
+                    handler: async (response) => {
+                        try {
+                            const verificationData = {
+                                orderId: data.orderId,
+                                razorpayOrderId: response.razorpay_order_id,
+                                razorpayPaymentId: response.razorpay_payment_id,
+                                razorpaySignature: response.razorpay_signature
+                            };
+                            
+                            const result = await api.orders.verifyRazorpay(verificationData);
+                            if (result.success) {
+                                toast.success('Payment verified successfully!');
+                                router.push('/orders');
+                            } else {
+                                toast.error('Payment verification failed.');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            toast.error(err.message || 'Error verifying payment');
+                        }
+                    },
+                    prefill: {
+                        name: selectedAddress ? selectedAddress.name : '',
+                        email: selectedAddress ? selectedAddress.email : '',
+                        contact: selectedAddress ? selectedAddress.phone : ''
+                    },
+                    theme: {
+                        color: '#DC2626'
+                    }
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.open();
             }
         } catch (error) {
             console.error(error);
@@ -99,8 +159,8 @@ const OrderSummary = ({ totalPrice, items }) => {
                 <label htmlFor="COD" className='cursor-pointer'>COD</label>
             </div>
             <div className='flex gap-2 items-center mt-1'>
-                <input type="radio" id="STRIPE" name='payment' onChange={() => setPaymentMethod('STRIPE')} checked={paymentMethod === 'STRIPE'} className='accent-gray-500' />
-                <label htmlFor="STRIPE" className='cursor-pointer'>Stripe Payment</label>
+                <input type="radio" id="RAZORPAY" name='payment' onChange={() => setPaymentMethod('RAZORPAY')} checked={paymentMethod === 'RAZORPAY'} className='accent-gray-500' />
+                <label htmlFor="RAZORPAY" className='cursor-pointer'>Razorpay Payment</label>
             </div>
             <div className='my-4 py-4 border-y border-slate-200 text-slate-400'>
                 <p>Address</p>

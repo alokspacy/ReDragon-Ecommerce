@@ -243,11 +243,37 @@ const getSellerDashboard = async (req, res) => {
   }
 };
 
+// @desc    Get store by username publicly
+// @route   GET /api/stores/public/:username
+// @access  Public
+const getPublicStore = async (req, res) => {
+  try {
+    const store = await prisma.store.findUnique({
+      where: { username: req.params.username },
+      include: {
+        Product: {
+          where: { inStock: true }
+        }
+      }
+    });
+
+    if (!store || !store.isActive) {
+      return res.status(404).json({ message: 'Store not found or is inactive' });
+    }
+
+    res.json(store);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching store' });
+  }
+};
+
 module.exports = {
   createStore,
   getStoreStatus,
   getMyStore,
   getStores,
   approveStore,
-  getSellerDashboard
+  getSellerDashboard,
+  getPublicStore
 };
