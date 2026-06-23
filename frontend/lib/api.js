@@ -1,5 +1,15 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-const API_URL = `${BACKEND_URL}/api`;
+const getBackendUrl = () => {
+  const url = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  return url.replace(/\/$/, ''); // Remove trailing slash
+};
+
+const getApiUrl = () => {
+  const backend = getBackendUrl();
+  if (backend === '/' || backend === '') {
+    return '/api';
+  }
+  return `${backend}/api`;
+};
 
 // Helper to make fetch requests
 const request = async (endpoint, options = {}) => {
@@ -18,7 +28,7 @@ const request = async (endpoint, options = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`${getApiUrl()}${endpoint}`, {
     ...options,
     headers,
   });
@@ -43,7 +53,9 @@ export const api = {
   imageUrl: (path) => {
     if (!path) return '';
     if (path.startsWith('http') || path.startsWith('data:')) return path;
-    return `${BACKEND_URL}${path}`;
+    const backend = getBackendUrl();
+    const cleanBackend = (backend === '/' || backend === '') ? '' : backend;
+    return `${cleanBackend}${path}`;
   },
 
   auth: {
