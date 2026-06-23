@@ -23,7 +23,7 @@ export default function Login() {
       const data = await api.auth.login(email, password);
       dispatch(setUser({ user: data, token: data.token }));
       toast.success(`Welcome back, ${data.name}!`);
-      
+
       // Redirect based on role
       if (data.role === 'admin') {
         router.push('/admin');

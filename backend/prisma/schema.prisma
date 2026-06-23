@@ -54,6 +54,7 @@ enum OrderStatus {
 enum PaymentMethod {
   COD
   STRIPE
+  RAZORPAY
 }
 
 model Order {
