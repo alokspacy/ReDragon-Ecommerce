@@ -27,7 +27,7 @@ const AdminSidebar = () => {
                 {user?.image ? (
                     <Image className="w-14 h-14 rounded-full shadow-md object-cover" src={api.imageUrl(user.image)} alt="" width={80} height={80} />
                 ) : (
-                    <Image className="w-14 h-14 rounded-full shadow-md" src={assets.gs_logo} alt="" width={80} height={80} />
+                    <Image className="w-14 h-14 rounded-full shadow-md" src={assets.redragon_logo} alt="" width={80} height={80} />
                 )}
                 <p className="text-slate-700">Hi, {user?.name || "Admin"}</p>
             </div>

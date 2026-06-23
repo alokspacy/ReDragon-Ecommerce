@@ -17,7 +17,7 @@ async function main() {
   }
 
   const assetsToCopy = [
-    'gs_logo.jpg',
+    'redragon_logo.png',
     'happy_store.webp',
     'product_img1.png',
     'product_img2.png',
@@ -58,11 +58,21 @@ async function main() {
         name: 'Alok Singh',
         email: adminEmail,
         password: hashedPassword,
-        image: '/uploads/gs_logo.jpg',
+        image: '/uploads/redragon_logo.png',
         role: 'admin',
       },
     });
     console.log('Created Admin User (admin@redragon.com / password123)');
+  } else {
+    admin = await prisma.user.update({
+      where: { email: adminEmail },
+      data: {
+        name: 'Alok Singh',
+        image: '/uploads/redragon_logo.png',
+        role: 'admin'
+      }
+    });
+    console.log('Updated seeded Admin User with ReDragon logo');
   }
 
   // 3. Create Seller User & Store
